@@ -21,20 +21,30 @@ app.get("/", (req, res) => {
   res.send("Página de inicio");
 });
 
-app.get("/login", (req, res) => {
-  res.sendFile(__dirname + "/views/login.html");
+app.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = await knex("users").where({ username }).first();
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    const token = jwt.sign({ userId: user.id }, "secret-key", {
+      expiresIn: "1h",
+    });
+    res.json({ token });
+  } else {
+    res.status(401).json({ message: "Credenciales incorrectas" });
+  }
 });
 
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  // Aquí deberías verificar las credenciales y autenticar al usuario
-  // Por simplicidad, lo dejaremos como un ejercicio adicional.
-  if (username === "usuario" && password === "contraseña") {
-    req.session.authenticated = true;
-    res.send("¡Inicio de sesión exitoso!");
-  } else {
-    res.send("Credenciales incorrectas");
-  }
+app.get("/dashboard", (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  jwt.verify(token, "secret-key", (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Token inválido" });
+    }
+    const userId = decoded.userId;
+    res.json({ message: `¡Bienvenido! Usuario ID: ${userId}` });
+  });
 });
 
 // Iniciar el servidor

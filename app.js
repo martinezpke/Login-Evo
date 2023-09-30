@@ -1,58 +1,37 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const session = require("express-session");
+const express = require('express');
+const pool = require('./db/db');
 
 const app = express();
+const port = 3000;
 
-// Configurar body-parser
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
+app.set('view engine', 'ejs'); // Establece EJS como el motor de plantillas
 
-// Configurar express-session
-app.use(
-  session({
-    secret: "secret-key",
-    resave: true,
-    saveUninitialized: true,
-  })
-);
-
-// Rutas
-app.get("/", (req, res) => {
-  res.send("Página de inicio");
+app.get('/', (req, res) => {
+  res.render('index');
 });
 
-app.get('/login', (req, res) => {
-    res.sendFile(__dirname + '/views/login.html');
-  });
-
-app.post("/login", async (req, res) => {
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  const user = await knex("users").where({ username }).first();
-
-  if (user && (await bcrypt.compare(password, user.password))) {
-    const token = jwt.sign({ userId: user.id }, "secret-key", {
-      expiresIn: "1h",
-    });
-    res.json({ token });
-  } else {
-    res.status(401).json({ message: "Credenciales incorrectas" });
-  }
-});
-
-app.get("/dashboard", (req, res) => {
-  const token = req.headers.authorization.split(" ")[1];
-  jwt.verify(token, "secret-key", (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: "Token inválido" });
+  pool.query('SELECT * FROM users WHERE name = $1 AND password = $2', [username, password], (error, result) => {
+    if (error) {
+      return console.error('Error executing query', error);
     }
-    const userId = decoded.userId;
-    res.json({ message: `¡Bienvenido! Usuario ID: ${userId}` });
+
+    if (result.rows.length > 0) {
+      res.send('¡Inicio de sesión exitoso!');
+    } else {
+      res.send('Nombre de usuario o contraseña incorrectos');
+    }
   });
 });
 
-// Iniciar el servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor iniciado en el puerto ${PORT}`);
+// Nueva ruta GET para mostrar la página de inicio de sesión
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en http://localhost:${port}`);
 });

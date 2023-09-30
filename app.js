@@ -21,6 +21,10 @@ app.get("/", (req, res) => {
   res.send("Página de inicio");
 });
 
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/views/login.html');
+  });
+
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
 

@@ -8,13 +8,14 @@ router.get('/', (req, res) => {
 })
 
 router.get('/index',verifyToken, (req, res) => {
-    res.send('Bienvenido');
+    res.render('index');
 })
 
-router.get('/test', verifyToken, (req, res) => {
-    res.send('text');
+router.get('/signup', (req, res) => {
+    res.send('signup');
 })
 
 router.post('/', controller.login)
+router.post('/signup', controller.signup)
 
 module.exports = router;

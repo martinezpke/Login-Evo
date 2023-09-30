@@ -17,7 +17,7 @@ exports.login = async (req, res) => {
             try {
                 const isPasswordValid = await compare(password, result.rows[0].password);
                 if (isPasswordValid === true) {
-                  await generateToken(res, result.rows[0].id,result.rows[0].name);
+                    await generateToken(res, result.rows[0].id, result.rows[0].name);
                 }
                 else {
                     res.status(401).json({ error: 'Contraseña incorrecta' });
@@ -32,4 +32,8 @@ exports.login = async (req, res) => {
         }
 
     });
+}
+
+exports.signup = async (req, res) => {
+    res.clearCookie('token').render('login');
 }
